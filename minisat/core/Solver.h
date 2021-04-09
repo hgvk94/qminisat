@@ -21,13 +21,13 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #ifndef Minisat_Solver_h
 #define Minisat_Solver_h
 
-#include "minisat/mtl/Vec.h"
-#include "minisat/mtl/Heap.h"
-#include "minisat/mtl/Alg.h"
-#include "minisat/mtl/IntMap.h"
-#include "minisat/utils/Options.h"
 #include "minisat/core/SolverTypes.h"
-
+#include "minisat/mtl/Alg.h"
+#include "minisat/mtl/Heap.h"
+#include "minisat/mtl/IntMap.h"
+#include "minisat/mtl/Vec.h"
+#include "minisat/utils/Options.h"
+#include <sstream>
 
 namespace Minisat {
 
@@ -270,6 +270,10 @@ protected:
     bool     isRemoved        (CRef cr) const;         // Test if a clause has been removed.
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     bool     satisfied        (const Clause& c) const; // Returns TRUE if a clause is satisfied in the current state.
+
+    void     print_silq_method ();
+    void     print_silq_clause(std::stringstream& ss, unsigned idx, const Clause& tc, bool is_learnt);
+    unsigned run_silq();
 
     // Misc:
     //

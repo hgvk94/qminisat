@@ -19,6 +19,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include <math.h>
+#include <string>
+#include <fstream>
 
 #include "minisat/mtl/Alg.h"
 #include "minisat/mtl/Sort.h"
@@ -578,22 +580,78 @@ struct reduceDB_lt {
     bool operator () (CRef x, CRef y) { 
         return ca[x].size() > 2 && (ca[y].size() == 2 || ca[x].activity() < ca[y].activity()); } 
 };
-void Solver::reduceDB()
-{
+
+namespace {
+unsigned ulog(unsigned n) {
+    unsigned i = 1;
+    while (i < n) {
+        i = i*2;
+    }
+    return i;
+}
+}
+
+
+void Solver::print_silq_clause(std::stringstream &ss, unsigned idx, const Clause& tc, bool is_learnt) {
+  std::string var = is_learnt ? "lrnt" : "cdb";
+  ss << var << "[" << idx << "] = [";
+  unsigned i = 0;
+  for (; i < tc.size() - 1; i++) {
+      ss << sign(tc[i]) ? "-" : "";
+      ss << Minisat::var(tc[i]) << ",";
+  }
+  ss << sign(tc[i]) ? "-" : "";
+  ss << Minisat::var(tc[i]) << "];" << "\n";
+}
+
+void Solver::print_silq_method() {
+    std::stringstream ss;
+    unsigned bits = ulog(learnts.size());
+    ss << "def is_bad_clause(const a: int[" << bits << "]): const int[" << bits <<"]!->B {\n";
+    ss << "cdb := vector(" << nClauses() << ", array(1, 1)): !(ℤ[])^"
+       << nClauses() << ";\n";
+    ss << "lrnt := vector(" << learnts.size() << ", array(1, 1)): !(ℤ[])^"
+       << learnts.size() << ";\n";
+    ss << "lrntsz := " << learnts.size() << ":!ℤ;\n";
+    ss << "if (a < lrntsz) { return false; }\n";
+    unsigned i = 0;
+    for(i = 0; i < nClauses(); i++) {
+        print_silq_clause(ss, i, ca[clauses[i]], false);
+    }
+    for (i = 0; i < learnts.size(); i++) {
+      print_silq_clause(ss, i, ca[learnts[i]], true);
+    }
+    ss << "return lrnt[a].size() > 4;\n}\n";
+    std::ofstream f("bad_clause.slq", std::ofstream::out);
+    f << ss.str();
+    f.close();
+}
+
+unsigned Solver::run_silq() {
+    return 0;
+}
+
+void Solver::reduceDB() {
     int     i, j;
     double  extra_lim = cla_inc / learnts.size();    // Remove any clause below this activity
-
-    sort(learnts, reduceDB_lt(ca));
+    print_silq_method();
+    unsigned k = run_silq();
+    assert(k >= 0);
+    assert(k < learnts.size());
+    removeClause(learnts[k]);
+    learnts[k] = learnts[learnts.size() - 1];
+    learnts.shrink(1);
+    // sort(learnts, reduceDB_lt(ca));
     // Don't delete binary or locked clauses. From the rest, delete clauses from the first half
     // and clauses with activity smaller than 'extra_lim':
-    for (i = j = 0; i < learnts.size(); i++){
-        Clause& c = ca[learnts[i]];
-        if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim))
-            removeClause(learnts[i]);
-        else
-            learnts[j++] = learnts[i];
-    }
-    learnts.shrink(i - j);
+    // for (i = j = 0; i < learnts.size(); i++){
+    //     Clause& c = ca[learnts[i]];
+    //     if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim))
+    //         removeClause(learnts[i]);
+    //     else
+    //         learnts[j++] = learnts[i];
+    // }
+    // learnts.shrink(i - j);
     checkGarbage();
 }
 
@@ -755,9 +813,9 @@ lbool Solver::search(int nof_conflicts)
             if (decisionLevel() == 0 && !simplify())
                 return l_False;
 
-            if (learnts.size()-nAssigns() >= max_learnts)
+            // if (learnts.size()-nAssigns() >= max_learnts)
                 // Reduce the set of learnt clauses:
-                reduceDB();
+            reduceDB();
 
             Lit next = lit_Undef;
             while (decisionLevel() < assumptions.size()){

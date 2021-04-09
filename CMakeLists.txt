@@ -68,6 +68,9 @@ set_target_properties(minisat-lib-shared
     VERSION ${MINISAT_VERSION}
     SOVERSION ${MINISAT_SOVERSION})
 
+target_compile_options(minisat_core PRIVATE -Wliteral-suffix -g)
+target_compile_options(minisat_simp PRIVATE -Wliteral-suffix -g)
+
 set_target_properties(minisat_simp       PROPERTIES OUTPUT_NAME "minisat")
 
 #--------------------------------------------------------------------------------------------------

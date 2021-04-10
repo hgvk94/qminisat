@@ -51,13 +51,16 @@ target_link_libraries(minisat-lib-shared ${ZLIB_LIBRARY})
 target_link_libraries(minisat-lib-static ${ZLIB_LIBRARY})
 
 add_executable(minisat_core minisat/core/Main.cc)
+add_executable(minisat_qcir minisat/core/Main2.cc)
 add_executable(minisat_simp minisat/simp/Main.cc)
 
 if(STATIC_BINARIES)
   target_link_libraries(minisat_core minisat-lib-static)
+  target_link_libraries(minisat_qcir minisat-lib-static)
   target_link_libraries(minisat_simp minisat-lib-static)
 else()
   target_link_libraries(minisat_core minisat-lib-shared)
+  target_link_libraries(minisat_qcir minisat-lib-shared)
   target_link_libraries(minisat_simp minisat-lib-shared)
 endif()
 
@@ -69,6 +72,7 @@ set_target_properties(minisat-lib-shared
     SOVERSION ${MINISAT_SOVERSION})
 
 target_compile_options(minisat_core PRIVATE -Wliteral-suffix -g)
+target_compile_options(minisat_qcir PRIVATE -Wliteral-suffix -g)
 target_compile_options(minisat_simp PRIVATE -Wliteral-suffix -g)
 
 set_target_properties(minisat_simp       PROPERTIES OUTPUT_NAME "minisat")

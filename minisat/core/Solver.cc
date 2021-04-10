@@ -627,6 +627,42 @@ void Solver::print_silq_method() {
     f.close();
 }
 
+void Solver::print_clause_circuit(std::stringstream &ss, unsigned i) {
+    const Clause& c = ca[clauses[i]];
+    ss << "c" << i << " := (";
+    unsigned j = 0;
+    for (; j < c.size() - 1; j++) {
+        if (sign(c[j]))
+            ss << "!";
+        ss << "a[" << Minisat::var(c[j]) << "] || ";
+    }
+    if (sign(c[j]))
+      ss << "!";
+    ss << "a[" << Minisat::var(c[j]) << "]) : B;\n";
+}
+
+void Solver::print_circuit() {
+    std::stringstream ss;
+    unsigned bits = nVars();
+    ss << "import grover;\n";
+    ss << "def circuit[n :!N](const a: uint[n])qfree {\n";
+    for (unsigned i = 0; i < nClauses(); i++) {
+        print_clause_circuit(ss, i);
+    }
+    unsigned i = 0;
+    ss << "cnf := (";
+    for (; i < nClauses() - 1; i++) {
+      ss << "c" << i << " && ";
+    }
+    ss << "c" << i << ");\n";
+    ss << "return cnf;\n}\n";
+    ss << "def main() {\n";
+    ss << "return grover[" << bits << "](circuit[" << bits << "]);\n}\n";
+    std::ofstream f("qcir.slq", std::ofstream::out);
+    f << ss.str();
+    f.close();
+}
+
 unsigned Solver::run_silq() {
     return 0;
 }

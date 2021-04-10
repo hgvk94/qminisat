@@ -68,6 +68,7 @@ public:
     bool    okay         () const;                  // FALSE means solver is in a conflicting state
 
     bool    implies      (const vec<Lit>& assumps, vec<Lit>& out);
+    void    print_circuit();
 
     // Iterate over clauses and top-level assignments:
     ClauseIterator clausesBegin() const;
@@ -271,6 +272,7 @@ protected:
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     bool     satisfied        (const Clause& c) const; // Returns TRUE if a clause is satisfied in the current state.
 
+    void     print_clause_circuit(std::stringstream& ss, unsigned i);
     void     print_silq_method ();
     void     print_silq_clause(std::stringstream& ss, unsigned idx, const Clause& tc, bool is_learnt);
     unsigned run_silq();

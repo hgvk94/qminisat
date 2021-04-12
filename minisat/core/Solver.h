@@ -272,11 +272,13 @@ protected:
     bool     locked           (const Clause& c) const; // Returns TRUE if a clause is a reason for some implication in the current state.
     bool     satisfied        (const Clause& c) const; // Returns TRUE if a clause is satisfied in the current state.
 
+    void     print_silq_clause_constr(std::stringstream& s, unsigned idx);
+    void     print_silq_constr(std::stringstream& s);
     void     print_clause_circuit(std::stringstream& ss, unsigned i);
     void     print_silq_method ();
-    void     print_silq_clause(std::stringstream& ss, unsigned idx, const Clause& tc, bool is_learnt);
-    unsigned run_silq();
-
+    void     print_silq_clause(std::stringstream& ss, unsigned idx, bool is_learnt);
+    bool     run_silq(vec<unsigned>& res);
+    bool     parse_silq_op(vec<unsigned>& res);
     // Misc:
     //
     int      decisionLevel    ()      const; // Gives the current decisionlevel.

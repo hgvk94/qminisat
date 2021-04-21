@@ -608,7 +608,7 @@ void Solver::print_silq_clause(std::stringstream& ss, unsigned idx, bool is_lear
   ss << Minisat::var(tc[i]) << "];" << "\n";
 }
 void Solver::print_silq_clause_constr(std::stringstream& ss, unsigned idx) {
-    ss << "lrnt[" << idx << "].length > 4";
+    ss << "is_mergeable(lrnt[" << idx << "])";
 }
 
 void Solver::print_silq_constr(std::stringstream& ss) {
@@ -622,13 +622,35 @@ void Solver::print_silq_constr(std::stringstream& ss) {
     ss << "cnstr := sz && (";
     for (i = 0; i < learnts.size() - 1; i++) {
         ss << "c" << i << " || ";
+void Solver::print_silq_is_mergeable() {
+    std::stringstream ss;
+    ss << "def is_mergeable(a : !(ℤ[])) lifted{\n";
+    ss << "cdb := vector(" << nClauses() << ", array(1, 1)): !(ℤ[])^"
+       << nClauses() << ";\n";
+    for (int i = 0; i < nClauses(); i++) {
+      print_silq_clause(ss, i, false);
     }
-    ss << "c" << i << ");\n";
+    ss << "nClauses := " << nClauses() << ";\n";
+    ss << "for i in [0..nClauses) {\n";
+    ss << "c := cdb[i];\n limit := 0;\n";
+    ss << "if (c.length < a.length) { \n limit = c.length;\n} else {\n limit = a.length;\n}\n";
+    ss << "m := 0;\n";
+    ss << "for j in [0..limit) {\n";
+    ss << "  for k in [0..limit) {\n";
+    ss << "     if (a[k] == c[j]) {\n m = m + 1;\n}\n}\n}";
+    ss << "if (m >= a.length - 1) {\n return true;\n}\n}";
+    ss << "return false;\n}";
+    std::ofstream f("is_mergeable.slq", std::ofstream::out);
+    f << ss.str();
+    f.close();
+}
+
 }
 
 void Solver::print_silq_method() {
     std::stringstream ss;
     unsigned bits = ulog(learnts.size());
+    ss << "import is_mergeable;\n";
     ss << "def is_bad_clause(const a: uint[" << bits << "]) qfree {\n";
     ss << "cdb := vector(" << nClauses() << ", array(1, 1)): !(ℤ[])^"
        << nClauses() << ";\n";
@@ -832,7 +854,7 @@ lbool Solver::search(int nof_conflicts)
     int         conflictC = 0;
     vec<Lit>    learnt_clause;
     starts++;
-
+    print_silq_is_mergeable();
     for (;;){
         CRef confl = propagate();
         if (confl != CRef_Undef){

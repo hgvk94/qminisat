@@ -279,6 +279,7 @@ protected:
     void     print_silq_clause(std::stringstream& ss, unsigned idx, bool is_learnt);
     bool     run_silq(vec<unsigned>& res);
     bool     parse_silq_op(vec<unsigned>& res);
+    void     print_silq_is_mergeable();
     // Misc:
     //
     int      decisionLevel    ()      const; // Gives the current decisionlevel.

@@ -611,17 +611,6 @@ void Solver::print_silq_clause_constr(std::stringstream& ss, unsigned idx) {
     ss << "is_mergeable(lrnt[" << idx << "])";
 }
 
-void Solver::print_silq_constr(std::stringstream& ss) {
-    ss << "sz := a < " << learnts.size() << ";\n";
-    unsigned i = 0;
-    for (; i < learnts.size(); i++) {
-        ss << "c" << i << " := (a == " << i << " && ";
-        print_silq_clause_constr(ss, i);
-        ss << ");\n";
-    }
-    ss << "cnstr := sz && (";
-    for (i = 0; i < learnts.size() - 1; i++) {
-        ss << "c" << i << " || ";
 void Solver::print_silq_is_mergeable() {
     std::stringstream ss;
     ss << "def is_mergeable(a : !(ℤ[])) lifted{\n";
@@ -645,6 +634,11 @@ void Solver::print_silq_is_mergeable() {
     f.close();
 }
 
+void Solver::print_silq_constr(std::stringstream& ss) {
+    ss << "sz := a < M;\n";
+    ss << "c := false: B;\n";
+    ss << "for i in [0..M) {\n c = c || (a == i && is_mergeable(lrnt[i]));\n}\n";
+    ss << "cnstr := sz && c;\n";
 }
 
 void Solver::print_silq_method() {
@@ -652,14 +646,9 @@ void Solver::print_silq_method() {
     unsigned bits = ulog(learnts.size());
     ss << "import is_mergeable;\n";
     ss << "def is_bad_clause(const a: uint[" << bits << "]) qfree {\n";
-    ss << "cdb := vector(" << nClauses() << ", array(1, 1)): !(ℤ[])^"
-       << nClauses() << ";\n";
-    ss << "lrnt := vector(" << learnts.size() << ", array(1, 1)): !(ℤ[])^"
-       << learnts.size() << ";\n";
-    unsigned i = 0;
-    // for(i = 0; i < nClauses(); i++) {
-    //     print_silq_clause(ss, i, false);
-    // }
+    ss << "M := " << learnts.size() <<";\n";
+    ss << "lrnt := vector(M, array(1, 1)): !(ℤ[])^M;\n";
+    unsigned i = 0; 
     for (i = 0; i < learnts.size(); i++) {
         print_silq_clause(ss, i, true);
     }

@@ -713,13 +713,27 @@ void Solver::print_circuit() {
 }
 
 bool Solver::parse_silq_op(vec<unsigned>& res) {
-    return true;
+    std::string line, amplitude, state;
+    std::ifstream rfile;
+    rfile.open("op.txt");
+    std::size_t pos;
+    if (rfile.is_open()) {
+      while (std::getline(rfile, line)) {
+          pos = line.find(",");
+          assert (pos != std::string::npos);
+          amplitude = line.substr(0, pos);
+          state = line.substr(pos + 1);
+          res.push(stoi(amplitude));
+      }
+      rfile.close();
+      return true;
+    }
+    return false;
 }
 bool Solver::run_silq(vec<unsigned>& res) {
-    printf("running silq\n");
     pid_t pid = fork();
     if (pid == 0) {
-        char *args[] = {"silq", "main.slq", "--run", NULL};
+        char *args[] = {"python3", "run-silq.py", NULL};
       execvp(args[0], args);
       return false;
     }
@@ -733,15 +747,13 @@ void Solver::reduceDB() {
     vec<unsigned> res;
     run_silq(res);
     unsigned j = 0, k = 0;
-    for (unsigned i = 0; i < res.size(); i++) {
-        k = res[i];
-        assert(k >= 0);
-        assert(k < learnts.size());
+    for (; k < learnts.size(); k++) {
+        if (res[k] >= 10) continue;
         removeClause(learnts[k]);
         j++;
         learnts[k] = learnts[learnts.size() - j];
     }
-    learnts.shrink(res.size());
+    learnts.shrink(k - j);
     checkGarbage();
 }
 
